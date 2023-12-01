@@ -1,9 +1,10 @@
+import os
 import netCDF4 as nc
 import xarray as xr
 import numpy as np
 from math import sin,cos,atan2,pi
-point_sel=(-64.25,-20)
-file='sa3-p.nc'
+point_sel=(-155.5,19.5)
+file='hwa-t.nc'
 path=f'/Users/justinlipper/project/data/{file}' #define path to input netCDF file
 ds=xr.open_dataset(path)
 #print(ds)
@@ -32,7 +33,7 @@ def get_D(point):
      a=sin((y2-y1)/2)**2+cos(y1)*cos(y2)*sin((x2-x1)/2)**2
      c=2*atan2(a**0.5,(1-a)**0.5)
      d=R*c
-     return d
+     return d/1000
 
 x=get_R(point_sel)
 print(x)
@@ -60,33 +61,42 @@ def get_Rs(d):
      i=1
      out=xr.open_dataset('out.nc')
      out['R'].loc[{'latitude':pointest[1],'longitude': pointest[0]}]=get_R(pointest)
-     print(pointest, get_R(pointest))
+     out['D'].loc[{'latitude':pointest[1],'longitude': pointest[0]}]=get_D(pointest)
+     print(pointest, get_R(pointest),get_D(pointest))
      while np.abs(pointest[0]-point_sel[0])<=d-0.25 and np.abs(pointest[1]-point_sel[1])<=d-0.25:
          for j in range(1,i+1):
               pointest[1]=pointest[1]+1/4
               out['R'].loc[{'latitude':pointest[1],'longitude': pointest[0]}]=get_R(pointest)
-              print(pointest, get_R(pointest))
+              out['D'].loc[{'latitude':pointest[1],'longitude': pointest[0]}]=get_D(pointest)
+              print(pointest, get_R(pointest),get_D(pointest))
          for j in range(1,i+1):
               pointest[0]=pointest[0]-1/4
               out['R'].loc[{'latitude':pointest[1],'longitude': pointest[0]}]=get_R(pointest)
-              print(pointest,get_R(pointest))
+              out['D'].loc[{'latitude':pointest[1],'longitude': pointest[0]}]=get_D(pointest)
+              print(pointest,get_R(pointest),get_D(pointest))
          for j in range(1,i+2):
               pointest[1]=pointest[1]-1/4
               cr=get_R(pointest)
               out['R'].loc[{'latitude':pointest[1],'longitude': pointest[0]}]=get_R(pointest)
-              print(pointest,get_R(pointest))
+              out['D'].loc[{'latitude':pointest[1],'longitude': pointest[0]}]=get_D(pointest)
+              print(pointest,get_R(pointest),get_D(pointest))
          for j in range(1,i+2):
               pointest[0]=pointest[0]+1/4  
               out['R'].loc[{'latitude':pointest[1],'longitude': pointest[0]}]=get_R(pointest)
-              print(pointest,get_R(pointest)) 
+              out['D'].loc[{'latitude':pointest[1],'longitude': pointest[0]}]=get_D(pointest)
+              print(pointest,get_R(pointest),get_D(pointest)) 
          i=i+2
      for j in range(i-1):
          pointest[1]=pointest[1]+1/4
          out['R'].loc[{'latitude':pointest[1],'longitude': pointest[0]}]=get_R(pointest)
-         print(pointest, get_R(pointest))
-     out.to_netcdf(f'out_({point_sel[0]},{point_sel[1]}){file}')
+         out['D'].loc[{'latitude':pointest[1],'longitude': pointest[0]}]=get_D(pointest)
+         print(pointest, get_R(pointest),get_D(pointest))
+     if not os.path.exists(f'results/({point_sel[0]},{point_sel[1]})'):
+         os.makedirs(f'results/({point_sel[0]},{point_sel[1]})')
+     out.to_netcdf(f'results/({point_sel[0]},{point_sel[1]})/out_({point_sel[0]},{point_sel[1]}){file}')
      
-get_Rs(3)     
+get_Rs(18)     
 #t=file.variables["time"]
 #i=file.sel(time=time[0])
 #print(time[0])
+print(f'python plot.py out_({point_sel[0]},{point_sel[1]}){file}')
